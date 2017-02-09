@@ -70,34 +70,38 @@ knn = cv2.ml.KNearest_create()
 knn.train(train_array, cv2.ml.ROW_SAMPLE, train_labels)
 
 #test 1
-test_img1 = cv2.imread("images/test5.jpeg")
-gray_test = 255 - cv2.cvtColor(test_img1, cv2.COLOR_BGR2GRAY)
-gray_test_original = gray_test.copy()
-retVal, thresh_test = cv2.threshold(gray_test, 127, 255, 0)
-kernel = np.ones((10, 10), np.uint8)
-thresh_test_img = cv2.dilate(thresh_test, kernel, iterations=1)
-
-_, contours_test, _ = cv2.findContours(thresh_test_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-show_image(test_img1, "test", contours_test)
+test = cv2.imread("images/test7.jpg")
+test = cv2.resize(test, (900, 400), interpolation=cv2.INTER_CUBIC)
+gray_test = cv2.cvtColor(test, cv2.COLOR_BGR2GRAY)   #POKUSATI SA 255 - cv2.cvtColor(one, cv2.COLOR_BGR2GRAY)
+gray_original = gray_test.copy()
+ #one_threshold = cv2.adaptiveThreshold(gray_one, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11,2)
+test_threshold = cv2.adaptiveThreshold(gray_test, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11,8)
+_, test_threshold = cv2.threshold(test_threshold, 127, 255, 0)
+test_threshold_original = test_threshold.copy()
+kernel = np.ones((3, 3), np.uint8)
+test_threshold = cv2.dilate(255-test_threshold, kernel, iterations=1)
+cv2.imshow("aaa", test_threshold)
+_, contours, _ = cv2.findContours(test_threshold, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+show_image(test,"testtt", contours)
 
 final_result = {}
 k = 0
-for cont_test in contours_test:
+for cont_test in contours:
     num_test = cont_test.copy()
     cx, cy, cw, ch = cv2.boundingRect(num_test)
-    forResize_test = gray_test_original[cy:cy + ch, cx:cx + cw]
-    if cw > 8 and ch > 8:
+    forResize_test = 255 - test_threshold_original[cy:cy + ch, cx:cx + cw]
+    if (cw > 10 and ch > 10) or (cw/ch > 3):
         if cw/ch > 1.2:
             final_result[cx] = 12
 
         else:
             #resized_test = cv2.resize(forResize_test, (img_x, img_y), interpolation=cv2.INTER_CUBIC)
             resized_test = img_resize(forResize_test)
-            #cv2.imshow("resized"+str(k), resized_test)
+            cv2.imshow("resized"+str(k), resized_test)
             resized_for_knn = resized_test.reshape(-1, img_x*img_y).astype(np.float32)
 
             #returnVal, result,neighbours,dist = knn.findNearest(resized_for_knn,5)
-            returnVal, result, neighbours, dist = knn.findNearest(resized_for_knn, 4)
+            returnVal, result, neighbours, dist = knn.findNearest(resized_for_knn, 3)
             final_result[cx] = result[0][0]
 
             k = k + 1
